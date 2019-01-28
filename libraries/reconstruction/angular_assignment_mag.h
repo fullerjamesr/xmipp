@@ -99,7 +99,7 @@ private:
     MultidimArray<double> imToPolar(MultidimArray<double> &cartIm, const size_t &rad, const size_t &ang);
     double interpolate(MultidimArray<double> &cartIm, double &x_coord, double &y_coord);
     void completeFourierShift(MultidimArray<double> &in, MultidimArray<double> &out);
-    void ccMatrix(MultidimArray<std::complex<double> > F1, MultidimArray<std::complex<double> > &F2, MultidimArray<double> &result);
+    void ccMatrix(MultidimArray<std::complex<double> > &F1, MultidimArray<std::complex<double> > &F2, MultidimArray<double> &result);
     void selectBands(MultidimArray<double> &in, MultidimArray<double> &out, const size_t &n_bands, const size_t &startBand, const size_t &n_ang);
     void maxByColumn(MultidimArray<double> &in, MultidimArray<double> &out, const size_t &nFil, const size_t &nCol);
     void rotCandidates(MultidimArray<double> &in, std::vector<double>& cand, const size_t &size, int *nPeaksFound);
@@ -112,6 +112,15 @@ private:
     void ssimIndex(MultidimArray<double> &X, MultidimArray<double> &Y, double &coeff);
     void bestCand2(MultidimArray<double> &MDaIn, MultidimArray<std::complex<double> > &MDaInF, MultidimArray<double> &MDaRef, std::vector<double> &cand, int &peaksFound, double *bestCandRot, double *shift_x, double *shift_y, double *bestCoeff);
     void _applyRotationAndShift(MultidimArray<double> &MDaRef, double &rot, double &tx, double &ty, MultidimArray<double> &MDaRefRot);
+    void rotCandidates2(MultidimArray<double> &in, std::vector<double> &cand, const size_t &size, int *nPeaksFound);
+    void _applyFourierImage2(MultidimArray<double> &data, MultidimArray<std::complex<double> > &FourierData);
+    void _applyFourierImage2(MultidimArray<double> &data, MultidimArray<std::complex<double> > &FourierData, const size_t &ang);
+    void halfFourierShift(MultidimArray<double> &in, MultidimArray<double> &out);
+    MultidimArray<double> imToPolar2(MultidimArray<double> &cartIm, const size_t &rad, const size_t &ang);
+    void rotCandidates3(MultidimArray<double> &in, std::vector<double> &cand, const size_t &size, int *nPeaksFound);
+    void fast_correlation_vector2(MultidimArray<std::complex<double> > FFT1, const MultidimArray<std::complex<double> > FFT2, MultidimArray< double >& R, FourierTransformer &transformer);
+
+    void _applyCircularMask(const MultidimArray<double> &in, MultidimArray<double> &out);
 };
 //@}
 
