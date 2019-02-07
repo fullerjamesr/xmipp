@@ -49,7 +49,7 @@ public:
     FileName fnIn, fnDir, fnSym, fnRef;
 public: // Internal members
     // Metadata with input images and input volumes
-    MetaData mdIn, mdRef;
+    MetaData mdIn, mdRef, mdOut;
 
     // vector of reference images
     std::vector< MultidimArray<double> > vecMDaRef;
