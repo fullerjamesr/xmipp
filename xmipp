@@ -819,6 +819,54 @@ def downloadDeepLearningModels():
                                     url, dataSet], cwd="src/xmipp")
     return pDLdownload
 
+def uncompresDLmodels(dirname, ok):
+    firstTime = True
+
+    modelsDir = dirname + "/models"
+
+    createDir(modelsDir)
+
+    tmpMANIFEST = {}
+    models = os.listdir(modelsDir)
+    for model in models:
+        if os.path.isdir(os.path.join(modelsDir, model)):
+            cmd1 = ("find %s/%s -type f -exec md5sum {} ;" % (modelsDir, model)).split()
+            cmd2 = "sort -k 2".split()
+            cmd3 = "md5sum"
+            p1 = subprocess.Popen(cmd1, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+            p3 = subprocess.Popen(cmd3, stdin=p2.stdout, stdout=subprocess.PIPE)
+
+            md5Dir = p3.stdout.read().replace(' -','')
+
+            tmpMANIFEST[model] = md5Dir
+
+    # make sure that downloads are finished
+    global pDLdownload
+    while pDLdownload is not None and pDLdownload.poll() is None:
+        if firstTime:
+            print(blue("The download of some Deep Learning models is not "
+                       "finish yet. Continuing the download in the foregroung..."))
+            firstTime = False
+
+    modelsSrc = os.path.join("src", "xmipp", "models")
+    maniFn = os.path.join(modelsSrc, "MANIFEST")
+    if os.path.isdir(maniFn):
+        md5Src = dict(x.strip().split() for x in open(maniFn).readlines())
+
+        for model, md5 in md5Src:
+            if md5 in tmpMANIFEST:
+                pass
+            else:
+                ok = ok and runJob("tar xzf %s/%s --directory=%s"
+                                   % (modelsSrc, model, modelsDir))
+
+    #
+    # ok = ok and runJob("cat src/xmipp/models/xmipp_model_*.tgz | tar xzf - -i --directory=" + dirname + "/models")
+    #
+    #
+    # return
+
 def install(dirname):
     print("Installing ------------------------------------------")
     cpCmd = "rsync -LptgoD" if checkProgram("rsync", False) else "cp"
@@ -857,15 +905,7 @@ def install(dirname):
     ok = ok and runJob(cpCmd+" src/xmippViz/bindings/python/xmippViz.py "+dirname+"/bindings/python/")
 
     if 'TRAVIS' not in os.environ:
-        firstTime = True
-        global pDLdownload
-        while pDLdownload is not None and pDLdownload.poll() is None:
-            if firstTime:
-                print(blue("The download of some Deep Learning models is not "
-                           "finish yet. Continuing the download in the foregroung..."))
-                firstTime = False
-        createDir(dirname+"/models")
-        ok = ok and runJob("cat src/xmipp/models/xmipp_model_*.tgz | tar xzf - -i --directory="+dirname+"/models")
+        ok = uncompresDLmodels(dirname, ok)
 
     if not ok:
         print(red("\nSome error occurred during the installation.\n"))
@@ -1129,6 +1169,9 @@ if __name__ == '__main__':
             tar.run(sys.argv[2], getVersion(onlyNumbers=True))
         else:
             tar.run(*sys.argv[2:])
+
+    elif mode=='kk':
+        uncompresDLmodels('build', True)
     else:
         usage(" -> option not found <- \n")
 
