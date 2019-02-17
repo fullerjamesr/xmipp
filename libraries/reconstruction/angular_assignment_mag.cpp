@@ -81,8 +81,10 @@ void ProgAngularAssignmentMag::run()
     // passing images to Image and then to MultidimArray structure
     const size_t n_bands = 16;
     const size_t startBand = 5;
+    const size_t finalBand = n_bands + startBand;
     const size_t n_rad = size_t(Xdim/2 + 0.5);
     size_t n_ang = size_t(180);
+    size_t n_ang2 = 2*n_ang;
 
 
     // experimental image related
@@ -92,8 +94,7 @@ void ProgAngularAssignmentMag::run()
     MultidimArray< std::complex<double> >   MDaInF2 ;
     MultidimArray<double>                   MDaInFM ;
     MultidimArray<double>                   MDaInFMs;
-    MultidimArray<double>                   MDaInFMs_polar(n_rad,2*n_ang);
-    MultidimArray<double>                   MDaInFMs_polarPart(n_bands, 2*n_ang);
+    MultidimArray<double>                   MDaInFMs_polarPart(n_bands, n_ang2);
     MultidimArray< std::complex<double> >   MDaInFMs_polarF;
 
     // reference image related
@@ -103,8 +104,7 @@ void ProgAngularAssignmentMag::run()
     MultidimArray< std::complex<double> >   MDaRefF2 ;
     MultidimArray<double>                   MDaRefFM ;
     MultidimArray<double>                   MDaRefFMs;
-    MultidimArray<double>                   MDaRefFMs_polar(n_rad,2*n_ang);
-    MultidimArray<double>                   MDaRefFMs_polarPart(n_bands, 2*n_ang);
+    MultidimArray<double>                   MDaRefFMs_polarPart(n_bands, n_ang2);
     MultidimArray< std::complex<double> >   MDaRefFMs_polarF;
 
     // try to storage all data related to reference images in memory
@@ -121,8 +121,7 @@ void ProgAngularAssignmentMag::run()
         transformerImage.getCompleteFourier(MDaRefF2);
         _getComplexMagnitude(MDaRefF2, MDaRefFM);
         completeFourierShift(MDaRefFM, MDaRefFMs);
-        MDaRefFMs_polar = imToPolar(MDaRefFMs, n_rad, 2*n_ang);
-        selectBands(MDaRefFMs_polar, MDaRefFMs_polarPart, n_bands, startBand, n_ang);
+        MDaRefFMs_polarPart = imToPolar(MDaRefFMs,startBand,finalBand,n_bands, n_rad, n_ang2);
         _applyFourierImage2(MDaRefFMs_polarPart, MDaRefFMs_polarF, n_ang);
         vecMDaRefFMs_polarF.push_back(MDaRefFMs_polarF);
 
@@ -163,8 +162,7 @@ void ProgAngularAssignmentMag::run()
         transformerImage.getCompleteFourier(MDaInF2);
         _getComplexMagnitude(MDaInF2, MDaInFM);
         completeFourierShift(MDaInFM, MDaInFMs);
-        MDaInFMs_polar = imToPolar(MDaInFMs, n_rad, 2*n_ang);
-        selectBands(MDaInFMs_polar, MDaInFMs_polarPart, n_bands, startBand, n_ang);
+        MDaInFMs_polarPart = imToPolar(MDaInFMs,startBand,finalBand,n_bands, n_rad, n_ang2);
         _applyFourierImage2(MDaInFMs_polarPart, MDaInFMs_polarF, n_ang);
 
         tempCoeff = -10.0;
@@ -213,8 +211,7 @@ void ProgAngularAssignmentMag::run()
             transformerImage.getCompleteFourier(MDaRefF2);
             _getComplexMagnitude(MDaRefF2, MDaRefFM);
             completeFourierShift(MDaRefFM, MDaRefFMs);
-            MDaRefFMs_polar = imToPolar(MDaRefFMs, n_rad, 2*n_ang);
-            selectBands(MDaRefFMs_polar, MDaRefFMs_polarPart, n_bands, startBand, n_ang);
+            MDaRefFMs_polarPart = imToPolar(MDaRefFMs,startBand,finalBand,n_bands, n_rad, n_ang2);
             _applyFourierImage2(MDaRefFMs_polarPart, MDaRefFMs_polarF, n_ang);
             // computing relative rotation and traslation
             ccMatrix(MDaInFMs_polarF, MDaRefFMs_polarF, ccMatrixRot);
@@ -232,7 +229,7 @@ void ProgAngularAssignmentMag::run()
         }
 
         // choose nCand of the candidates with best corrCoeff
-        int nCand2 = 3;
+        int nCand2 = 1;
         std::partial_sort(Idx2.begin(), Idx2.begin()+nCand2, Idx2.end(),
                           [&](int i, int j){return candidatesFirstLoopCoeff2[i] > candidatesFirstLoopCoeff2[j]; });
 
@@ -255,12 +252,11 @@ void ProgAngularAssignmentMag::run()
             mdOut.setValue(MDL_ANGLE_PSI,    bestRot2[Idx2[i]], idxOut);
             mdOut.setValue(MDL_SHIFT_X,     -1. * bestTx2[Idx2[i]], idxOut);
             mdOut.setValue(MDL_SHIFT_Y,     -1. * bestTy2[Idx2[i]], idxOut);
-
-            // append
-                mdOut.write(fnDir.getString()+String("outfileMD.xmd"),MD_APPEND);
         }
     }
 
+    // write output metaData file
+    mdOut.write(fnDir.getString()+String("outfileMD.xmd"));
     transformerImage.cleanup();
     transformerPolarImage.cleanup();
 
@@ -393,8 +389,11 @@ void ProgAngularAssignmentMag::_getComplexMagnitude( MultidimArray< std::complex
 /* cartImg contains cartessian  grid representation of image,
 *  rad and ang are the number of radius and angular elements*/
 MultidimArray<double> ProgAngularAssignmentMag::imToPolar(MultidimArray<double> &cartIm,
+                                                          const size_t &startBand,
+                                                          const size_t &finalBand,
+                                                          const size_t &n_bands,
                                                           const size_t &rad, const size_t &ang){
-    MultidimArray<double> polarImg(rad, ang);
+    MultidimArray<double> polarImg(n_bands, ang);
     float pi = 3.141592653;
     // coordinates of center
     double cy = (Ydim+1)/2.0;
@@ -408,14 +407,14 @@ MultidimArray<double> ProgAngularAssignmentMag::imToPolar(MultidimArray<double> 
 
     // loop through rad and ang coordinates
     double r, t, x_coord, y_coord;
-    for(size_t ri = 0; ri < rad; ri++){
+    for(size_t ri = startBand; ri < finalBand; ri++){
         for(size_t ti = 0; ti < ang; ti++ ){
             r = ri * delR;
             t = ti * delT;
             x_coord = ( r * cos(t) ) * sfx + cx;
             y_coord = ( r * sin(t) ) * sfy + cy;
             // set value of polar img
-            DIRECT_A2D_ELEM(polarImg,ri,ti) = interpolate(cartIm,x_coord,y_coord);
+            DIRECT_A2D_ELEM(polarImg,ri-startBand,ti) = interpolate(cartIm,x_coord,y_coord);
         }
     }
 

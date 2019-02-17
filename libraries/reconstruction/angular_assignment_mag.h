@@ -96,7 +96,7 @@ private:
     void _applyFourierImage(MultidimArray<double> &data, MultidimArray<std::complex<double> > &FourierData);
     void _applyFourierImage(MultidimArray<double> &data, MultidimArray<std::complex<double> > &FourierData, const size_t &ang);
     void _getComplexMagnitude(MultidimArray<std::complex<double> > &FourierData, MultidimArray<double> &FourierMag);
-    MultidimArray<double> imToPolar(MultidimArray<double> &cartIm, const size_t &rad, const size_t &ang);
+    MultidimArray<double> imToPolar(MultidimArray<double> &cartIm, const size_t &startBand, const size_t &finalBand, const size_t &n_bands, const size_t &rad, const size_t &ang);
     double interpolate(MultidimArray<double> &cartIm, double &x_coord, double &y_coord);
     void completeFourierShift(MultidimArray<double> &in, MultidimArray<double> &out);
     void ccMatrix(MultidimArray<std::complex<double> > &F1, MultidimArray<std::complex<double> > &F2, MultidimArray<double> &result);
