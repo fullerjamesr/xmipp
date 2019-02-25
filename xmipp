@@ -578,9 +578,9 @@ def configMPI(configDict):
     if configDict["MPI_CC"]=="":
         configDict["MPI_CC"]="mpicc" if checkProgram("mpicc") else ""
     if configDict["MPI_CXX"]=="":
-        configDict["MPI_CXX"]="mpiCC" if checkProgram("mpiCC") else ""
+        configDict["MPI_CXX"]="mpiCC" if checkProgram("mpiCC") else "mpicxx" if checkProgram("mpicxx") else ""
     if configDict["MPI_LINKERFORPROGRAMS"]=="":
-        configDict["MPI_LINKERFORPROGRAMS"]="mpiCC" if checkProgram("mpiCC") else ""
+        configDict["MPI_LINKERFORPROGRAMS"]="mpiCC" if checkProgram("mpiCC") else "mpicxx" if checkProgram("mpicxx") else ""
 
     # MPI_CXXFLAGS is normally not needed, but if it is we may use mpicc --showme:compile
     # MPI_LINKFLAGS is normally not needed, but if it is we may use mpicc --showme:link
